@@ -1,0 +1,15 @@
+   ________          __  ____            
+  / ____/ /_  ____ _/ /_/ __ )____  _  __
+ / /   / __ \/ __ `/ __/ __  / __ \| |/_/
+/ /___/ / / / /_/ / /_/ /_/ / /_/ />  <  
+\____/_/ /_/\__,_/\__/_____/\____/_/|_|  
+
+If you really like command line interfaces, go ahead and try to fix
+this I guess
+
+
+Genuinely important
+---------------------------
+This version actually prints every signal, meaning in newer versions, your only enemy
+is *sending* invalid signals rather than revieving them. But lucky for you, I don't
+plan on changing the four original signal types, so you should be fine...... for now
