@@ -7,6 +7,14 @@
 If you really like command line interfaces, go ahead and try to fix
 this I guess
 
+For any implimenters
+---------------------------
+There is a function called getIP(). Because getting the connecting IP varies
+depending on your setup, you need to change this to match. Typically, it is req.socket.remoteAddress,
+but if you have a proxy like a cloudflared tunnel, then you might be able to use req.headers["cf-connecting-ip"],
+and this is important because req.socket.remoteAddress gets the *literal request source ip*, meaning if you have a proxy,
+it will always give you the ip of the proxy, which is why proxies typically (depending on who made it) include the original
+request ip in the headers.
 
 Genuinely important
 ---------------------------

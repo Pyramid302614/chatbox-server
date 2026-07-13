@@ -14,51 +14,91 @@ wss.on("connection",webSocketConnection);
 
 console.log("All good! :)");
 
-server.listen(3000,() => {
+server.listen(parseInt(process.argv[2]??"3000"),() => {
     console.log("Server is now listening for you");
 });
 
+var ipDats = {
+
+};
+
+
+const frameLimit = 10;
+const frameDuration = 12_000;
+
+setInterval(() => {
+    ipDats = {};
+}, frameDuration);
+
+function getIP(req) {
+    return req.headers["cf-connecting-ip"];
+}
+
+// Returns true/false for ignored/process
+function processRateLimiting(req,ws) {
+
+    if(ipDats[getIP(req)] > frameLimit) return true;
+    if(ipDats[getIP(req)] == frameLimit) {
+        
+        if(ws !== undefined) ws.send("mute");
+        webSocketSendAll("warning>"+(getClient(getClientIdFromIP(getIP(req))).displayName ?? "Anonymous ") + " has been temporarily muted for spam.");
+        ipDats[getIP(req)]++;
+        return true;
+
+    }
+    if(!ipDats[getIP(req)] || ipDats[getIP(req)] <= frameLimit+10) ipDats[getIP(req)] = (ipDats[getIP(req)] ?? 0) + 1;
+    return false;
+
+}
+
 function serverRequest(req,res) {
 
-    if(req.url == "/me") {
+     if(processRateLimiting(req)) return;
+
+    if(req.url.startsWith("/me:")) {
+        const clientId = req.url.split(":")[1];
         res.writeHead(200,{"Content-Type":"text/plain"});
-        res.end((getClient(getClientIdFromIP(req.socket.remoteAddress)) ?? {}).displayName ?? "Anonymous");
+        res.end((getClient(clientId) ?? {}).displayName ?? "Anonymous");
     }
 
 }
 
 function webSocketConnection(ws,req) {
 
-    if(getClientIdFromIP(req.socket.remoteAddress)) connectClient(req.socket.remoteAddress);
+    if(processRateLimiting(req,ws)) return;
+
+    if(getClientIdFromIP(getIP(req))) connectClient(getIP(req));
 
     ws.on("close",() => webSocketClose(ws,req));
 
     ws.on("message", event => {
 
+        if(processRateLimiting(req,ws)) return;
+    
         const message = event.toString();
 
         if(message == "heartbeat") return;
 
-        const clientId = getClientIdFromIP(req.socket.remoteAddress);
-            const client = getClient() ?? {};
+        const clientId = getClientIdFromIP(getIP(req));
+        const client = getClient(clientId) ?? {};
 
         switch(message.split(">")[0]) {
 
             case "join": 
 
-                updateClientIP(message.split(">")[1],req.socket.remoteAddress);
-                connectClient(req.socket.remoteAddress);                        
+                updateClientIP(message.split(">")[1],getIP(req));
+                connectClient(getIP(req));                        
                 break;
 
             case "message":
 
-                webSocketSendAll("message>"+message.slice("message>".length)+"&&&&&&&&"+(client.displayName ?? "Anonymous"));
+                webSocketSendAll("message>"+message.slice("message>".length)+"&&&&&&&&"+(client.displayName ?? "Anonymous")+"&&&&&&&&"+Date.now());
                 break;
 
             case "name":
 
                 const newName = message.slice("name>".length);
-                webSocketSendAll(`name>${getClient(getClientIdFromIP(req.socket.remoteAddress)).displayName}&&&&&&&&${newName}`)
+                webSocketSendAll(`name>${client.displayName}&&&&&&&&${newName}`)
                 client.displayName = newName;
                 updateClient(clientId,client);
                 break;
@@ -70,7 +110,7 @@ function webSocketConnection(ws,req) {
 }
 function webSocketClose(ws,req) {
 
-    const clientId = getClientIdFromIP(req.socket.remoteAddress);
+    const clientId = getClientIdFromIP(getIP(req));
     const client = getClient(clientId);
     client.connected = false;
     updateClient(clientId,client);
