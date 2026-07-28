@@ -167,19 +167,19 @@ function parseSignal(signal) {
 
 function getClient(clientId) {
 
-    return require("./clients.json")[clientId];
+    return JSON.parse(require("fs").readFileSync("clients.json"),"utf-8")[clientId];
 
 }
 function getClientIdFromIP(ip) {
 
-    for(const clientId of Object.keys(require("./clients.json")))
+    for(const clientId of Object.keys(JSON.parse(require("fs").readFileSync("clients.json"),"utf-8")))
         if((getClient(clientId)??{}).ip == ip) return clientId;
     return undefined;
 
 }
 function updateClient(clientId,newClient) {
 
-    const data = require("./clients.json");
+    const data = JSON.parse(require("fs").readFileSync("clients.json"),"utf-8");
     data[clientId] = newClient;
     require("fs").writeFileSync("clients.json",JSON.stringify(data,null,2));
 
