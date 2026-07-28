@@ -15,7 +15,7 @@ wss.on("connection",webSocketConnection);
 console.log("All good! :)");
 
 server.listen(parseInt(process.argv[2]??"3000"),() => {
-    console.log("Server is now listening for you");
+    console.log("Server is now listening for you at port " + parseInt(process.argv[2]??"3000"));
 });
 
 var ipDats = {
