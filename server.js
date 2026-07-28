@@ -101,7 +101,8 @@ function webSocketConnection(ws,req) {
 
             case "message":
 
-                webSocketSendAll("message>"+message.slice("message>".length)+"&&&&&&&&"+(client.displayName ?? "Anonymous")+"&&&&&&&&"+Date.now());
+                const author = clientId == "123456789" ? message.split("::::")[1] : (client.displayName ?? "Anonymous");
+                webSocketSendAll("message>"+message.slice("message>".length)+"&&&&&&&&"+author+"&&&&&&&&"+Date.now());
                 break;
 
             case "name":
