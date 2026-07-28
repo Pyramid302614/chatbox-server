@@ -41,7 +41,7 @@ function processRateLimiting(req,ws) {
     if(ipDats[getIP(req)] == frameLimit) {
         
         if(ws !== undefined) ws.send("mute");
-        webSocketSendAll("warning>"+(getClient(getClientIdFromIP(getIP(req))).displayName ?? "Anonymous ") + " has been temporarily muted for spam.");
+        webSocketSendAll("warning>"+((getClient(getClientIdFromIP(getIP(req)))??{}).displayName ?? "Anonymous ") + " has been temporarily muted for spam.");
         ipDats[getIP(req)]++;
         return true;
 
@@ -107,7 +107,7 @@ function webSocketConnection(ws,req) {
             case "name":
 
                 const newName = message.slice("name>".length);
-                webSocketSendAll(`name>${client.displayName}&&&&&&&&${newName}`)
+                webSocketSendAll(`name>${client.displayName??"Anonymous"}&&&&&&&&${newName}`)
                 client.displayName = newName;
                 updateClient(clientId,client);
                 break;
@@ -118,6 +118,8 @@ function webSocketConnection(ws,req) {
 
 }
 function webSocketClose(ws,req) {
+
+    console.log(getIP(req));
 
     const clientId = getClientIdFromIP(getIP(req));
     const client = getClient(clientId) ?? {};
@@ -171,7 +173,7 @@ function getClient(clientId) {
 function getClientIdFromIP(ip) {
 
     for(const clientId of Object.keys(require("./clients.json")))
-        if(getClient(clientId).ip == ip) return clientId;
+        if((getClient(clientId)??{}).ip == ip) return clientId;
     return undefined;
 
 }
