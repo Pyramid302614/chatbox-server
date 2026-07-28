@@ -120,7 +120,7 @@ function webSocketConnection(ws,req) {
 function webSocketClose(ws,req) {
 
     const clientId = getClientIdFromIP(getIP(req));
-    const client = getClient(clientId);
+    const client = getClient(clientId) ?? {};
     client.connected = false;
     updateClient(clientId,client);
     webSocketSendAll(`leave>${client.displayName ?? "Anonymous"}`);
