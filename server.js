@@ -108,7 +108,7 @@ function webSocketConnection(ws,req) {
             case "name":
 
                 const newName = message.slice("name>".length);
-                webSocketSendAll(`name>${client.displayName??"Anonymous"}&&&&&&&&${newName}`)
+                if(clientId != "123456789") webSocketSendAll(`name>${client.displayName??"Anonymous"}&&&&&&&&${newName}`)
                 client.displayName = newName;
                 updateClient(clientId,client);
                 break;
