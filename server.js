@@ -177,7 +177,6 @@ function getClientIdFromIP(ip) {
 
 }
 function updateClient(clientId,newClient) {
-
     write("clients.json",clientId,newClient);
 
 }
@@ -262,6 +261,8 @@ function processAllWriteRequests() {
         request.onwrite?.();
 
     }
+
+    writeRequests = [];
 
 }
 
