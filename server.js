@@ -246,8 +246,10 @@ function processAllWriteRequests() {
 
     for(const request of writeRequests) { // Newest gets written last
 
-        datas[request.file] = modifyObject(datas[request.file],request.property,request.value);
-
+        try {
+            datas[request.file] = modifyObject(datas[request.file],request.property,request.value);
+        } catch(ignored) {}
+        
     }
 
     for(const file of Object.keys(datas)) {
