@@ -193,7 +193,7 @@ function connectClient(ip) {
     const clientId = getClientIdFromIP(ip);
     const client = getClient(clientId) ?? {};
 
-    if(!client.connected) webSocketSendAll(`join>${client.displayName ?? "Anonymous"}`);
+    if(!client.connected && clientId != "123456789") webSocketSendAll(`join>${client.displayName ?? "Anonymous"}`);
 
     client.connected = true;
     updateClient(clientId,client);
