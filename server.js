@@ -31,7 +31,8 @@ setInterval(() => {
 }, frameDuration);
 
 function getIP(req) {
-    return req.headers["cf-connecting-ip"];
+    // return req.headers["cf-connecting-ip"];
+    return req.socket.remoteAddress;
 }
 
 // Returns true/false for ignored/process
@@ -94,9 +95,8 @@ function webSocketConnection(ws,req) {
         switch(message.split(">")[0]) {
 
             case "join": 
-
                 updateClientIP(message.split(">")[1],getIP(req));
-                connectClient(getIP(req));                        
+                // connectClient(getIP(req));                        
                 break;
 
             case "message":
@@ -118,8 +118,6 @@ function webSocketConnection(ws,req) {
 
 }
 function webSocketClose(ws,req) {
-
-    console.log(getIP(req));
 
     const clientId = getClientIdFromIP(getIP(req));
     const client = getClient(clientId) ?? {};
@@ -179,9 +177,7 @@ function getClientIdFromIP(ip) {
 }
 function updateClient(clientId,newClient) {
 
-    const data = JSON.parse(require("fs").readFileSync("clients.json"),"utf-8");
-    data[clientId] = newClient;
-    require("fs").writeFileSync("clients.json",JSON.stringify(data,null,2));
+    write("clients.json",clientId,newClient);
 
 }
 function updateClientIP(clientId,ip) {
@@ -202,3 +198,70 @@ function connectClient(ip) {
     updateClient(clientId,client);
 
 }
+
+
+var writeRequests = [];
+
+async function write(file,property,value) {
+    await new Promise(resolve =>
+        writeRequests.push({
+            file: file,
+            property: property,
+            value: value,
+            onwrite: resolve
+        })
+    );
+}
+
+function modifyObject(obj,path,value) {
+
+    // Stole from snake bot (my own project, so its not theft)
+    var temp = structuredClone(obj);
+    var dissected = [];
+    var split = path.split(".");
+    for(let i = 0; i < split.length; i++) {
+        dissected.push(temp ?? {});
+        if(i != split.length-1 && typeof temp?.[split[i]] != "object") temp[split[i]] = {};
+        temp = temp[split[i]];
+    }
+    dissected.push(value);
+    for(let i = split.length-1; i >= 0; i--)
+        dissected[i][split[i]] = dissected[i+1];
+
+    return dissected[0];
+
+}
+
+function processAllWriteRequests() {
+
+    const datas = {};
+    
+    for(const request of writeRequests) {
+
+        if(!Object.keys(datas).includes(request.file)) {
+            datas[request.file] = JSON.parse(require("fs").readFileSync(request.file),"utf-8");
+        }
+
+    }
+
+    for(const request of writeRequests) { // Newest gets written last
+
+        datas[request.file] = modifyObject(datas[request.file],request.property,request.value);
+
+    }
+
+    for(const file of Object.keys(datas)) {
+
+        require("fs").writeFileSync(file,JSON.stringify(datas[file],null,2),"utf-8");
+
+    }
+
+    for(const request of writeRequests) {
+
+        request.onwrite?.();
+
+    }
+
+}
+
+setInterval(processAllWriteRequests,1_000);
